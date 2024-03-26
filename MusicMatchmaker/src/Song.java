@@ -112,4 +112,9 @@ public class Song {
 	public void setIsrc(String isrc) {
 		this.isrc = isrc;
 	}
+	
+	public String toString()
+	{
+		return trackName + " - " + artistName + " - " + genre;
+	}
 }

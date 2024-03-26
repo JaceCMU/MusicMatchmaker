@@ -1,42 +1,40 @@
+import java.util.List;
+
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
 public class Main extends Application{
-	int currSong = 0;
-	int songThreshold = 25;
-	int currPage = 1;
-	int numPages;
-	String searchType = "song";
+	boolean toggle = false;
+	
+	static int currSong = 0;
+	static int songThreshold = 25;
+	static int currPage = 1;
+	static int numPages;
+	static List<Song> currSongList;
+	static String searchType = "song";
 	
 	public static void main(String[] args) {
 		launch(args);
@@ -44,82 +42,47 @@ public class Main extends Application{
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		//Populate the song list
 		Song.populateSongList();
-		
-		BorderPane mainWindowPane = new BorderPane();
-		
-		//Images
-		ImageView searchButtonImg = new ImageView(new Image("Images\\searchButton.png", 20, 20, false, false));
-		ImageView slidingMenuToggleImg = new ImageView(new Image("Images\\3LinesButton.png", 30, 30, false, false));
-		ImageView settingsButtonImg = new ImageView(new Image("Images\\settingsButton.png", 30, 30, false, false));
-		ImageView moreDetailsButtonImg = new ImageView(new Image("Images\\3DotsButton.png", 20, 20, false, false));
-		
-		
-		//Top
-		Button moreDetailsButton = new Button("", moreDetailsButtonImg);
-		TextField searchSongField = new TextField("Search for similar songs");
-		searchSongField.setPrefWidth(400);
-		searchSongField.setPrefHeight(30);
-		Button searchButton = new Button("", searchButtonImg);
-		
-		Button slidingMenuToggleButton = new Button("", slidingMenuToggleImg);
-		Button settingsButton = new Button("", settingsButtonImg);
-		
-		//HBox for the three search bar components
-		HBox searchBar = new HBox(moreDetailsButton, searchSongField, searchButton);
-		searchBar.setAlignment(Pos.CENTER);
-		
-		//HBox for the entire top area
-		HBox topBar = new HBox(30, slidingMenuToggleButton, searchBar, settingsButton);
-		HBox.setHgrow(searchBar, Priority.ALWAYS);
-		
-		
-		//Center
-		BorderPane centerPane = new BorderPane();
-		centerPane.setPrefSize(600, 300);
-		
-		GridPane songGridPane = new GridPane();
-		ScrollPane gridScrollPane = new ScrollPane(songGridPane);
-		songGridPane.setMinWidth(gridScrollPane.getWidth());
-
-		songGridPane.setHgap(40);
-		songGridPane.setVgap(10);
-		songGridPane.setPadding(new Insets(10));
-		
-		//Set up first row of grid pane
-		songGridPane.add(new Label("Song name"), 0, 0);
-		songGridPane.add(new Label("Artist"), 1, 0);
-		songGridPane.add(new Label("Album"), 2, 0);
-		songGridPane.add(new Label("Genre"), 3, 0);
 		
 		//If the amount of songs isn't divisible by 25 we have to add one extra page to show said songs
 		numPages = (Song.songList.size() % 25) == 0 ? Song.songList.size() / 25 : Song.songList.size() / 25 + 1;
 		
+		//Create the main border pane
+		BorderPane mainWindowPane = new BorderPane();
+		
+		//Create the top control bar
+		TopPane topControlBar = new TopPane();
+		
+		//Center
+		CenterPane centerSongPane = new CenterPane();
+		
+		//Left popout
+		LeftPane leftPopoutPane = new LeftPane();
+		
+		//Variables that need to be used from CenterPane
+		Button nextPageButton = centerSongPane.getNextPageButton();
+		Button prevPageButton = centerSongPane.getPrevPageButton();
+		GridPane songGridPane = centerSongPane.getSongGrid();
+		ScrollPane gridScrollPane = centerSongPane.getSongScrollPane();
+		Label pageContentLabel = centerSongPane.getPageContentLabel();
+		TextField gotoPage = centerSongPane.getGotoPageField();
+		
 		//Fill song list with songThreshold number of songs
-		updateSongList(songGridPane, currSong, songThreshold, -1);
-		
-		//Creating the page navigation bar under songs
-		Button prevPage = new Button("<");
-		TextField gotoPage = new TextField();
-		gotoPage.setPromptText(String.valueOf(currPage));
-		gotoPage.setAlignment(Pos.CENTER);
-		Button nextPage = new Button(">");
-		Label pageContentLabel = new Label("Page 1 of " + numPages);
-		HBox pageModifier = new HBox(prevPage, gotoPage, nextPage, pageContentLabel);
-		pageModifier.setAlignment(Pos.CENTER);
-		
-		
+		updateListVariables(Song.songList);
+		updateSongList(currSongList, songGridPane, currSong, songThreshold, -1);
+	
 		//Change page event handlers
-		nextPage.setOnAction(new EventHandler<ActionEvent>()
+		nextPageButton.setOnAction(new EventHandler<ActionEvent>()
 			{
 				public void handle(ActionEvent e)
-				{
-					if (currPage < numPages + 1)
+				{	
+					if (currPage < numPages)
 					{
 						currPage += 1;
 						currSong += 25;
 						
-						updateSongList(songGridPane, currSong, songThreshold, -1);
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, -1);
 						
 						pageContentLabel.setText("Page " + currPage + " of " + numPages);
 						gotoPage.clear();
@@ -130,7 +93,7 @@ public class Main extends Application{
 				}
 			});
 		
-		prevPage.setOnAction(new EventHandler<ActionEvent>()
+		prevPageButton.setOnAction(new EventHandler<ActionEvent>()
 			{
 				public void handle(ActionEvent e)
 				{
@@ -139,7 +102,7 @@ public class Main extends Application{
 						currPage -= 1;
 						currSong -= 25;
 						
-						updateSongList(songGridPane, currSong, songThreshold, -1);
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, -1);
 						gotoPage.clear();
 						gotoPage.setPromptText(String.valueOf(currPage));
 						
@@ -156,10 +119,17 @@ public class Main extends Application{
 				{
 					if (e.getCode() == KeyCode.ENTER)
 					{
+						int gotoPageNum = Integer.parseInt(gotoPage.getText());
+						
+						if (gotoPageNum < 1 || gotoPageNum > numPages)
+						{
+							return;
+						}
+						
 						currPage = Integer.parseInt(gotoPage.getText());
 						currSong = (currPage - 1) * 25;
 						
-						updateSongList(songGridPane, currSong, songThreshold, Integer.parseInt(gotoPage.getText()));
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, Integer.parseInt(gotoPage.getText()));
 						gotoPage.clear();
 						gotoPage.setPromptText(String.valueOf(currPage));
 						
@@ -170,7 +140,32 @@ public class Main extends Application{
 				}
 			});
 		
-		Label songsText = new Label("Songs");
+		
+		//Left
+		TranslateTransition popoutAnimation = new TranslateTransition(Duration.millis(500), leftPopoutPane);
+		popoutAnimation.setFromX(leftPopoutPane.getTranslateX());
+		popoutAnimation.setToX(0);
+		
+		topControlBar.getSlidingMenuButton().setOnAction(new EventHandler<ActionEvent>()
+				{
+
+					@Override
+					public void handle(ActionEvent e) {
+						if (toggle == false)
+						{
+							popoutAnimation.setRate(1);
+							popoutAnimation.play();
+							toggle = true;
+						}else
+						{
+							popoutAnimation.setRate(-1);
+							popoutAnimation.play();
+							toggle = false;
+						}
+					}
+					
+				});
+		
 		
 		//Right
 		BorderPane rightPane = new BorderPane();
@@ -182,35 +177,21 @@ public class Main extends Application{
 		
 		
 		//Add components to border panes
-		mainWindowPane.setTop(topBar);
-		
-		centerPane.setTop(songsText);
-		centerPane.setCenter(gridScrollPane);
-		centerPane.setBottom(pageModifier);
-		
 		rightPane.setTop(playlistText);
 		rightPane.setRight(playlistScrollBar);
 		
-		mainWindowPane.setCenter(centerPane);
+		mainWindowPane.setTop(topControlBar);
+		mainWindowPane.setLeft(leftPopoutPane);
+		mainWindowPane.setCenter(centerSongPane);
 		mainWindowPane.setRight(rightPane);
-		
 		
 		//Setting component styles
 		mainWindowPane.getStyleClass().add("pane");
 		songGridPane.getStyleClass().add("pane");
 		gridScrollPane.getStyleClass().add("pane");
 		
-		//Rounding sides of the buttons next to search bar and adding a border to the top
-		moreDetailsButton.setStyle("-fx-border-width: 2; -fx-border-color: black;-fx-border-radius: 20px 0 0 20px;");
-		searchButton.setStyle("-fx-border-width: 2;-fx-border-color: black;-fx-border-radius: 0 20px 20px 0;");
-		topBar.setStyle("-fx-border-color: black; -fx-border-width: 0 0 2 0;");
-		
 		//Setting ids of components to be styled in CSS file
 		playlistText.setId("headerText");
-		songsText.setId("headerText");
-		prevPage.setId("pageNavigationButtons");
-		nextPage.setId("pageNavigationButtons");
-
 
 		//Settings stage creation		
 		Label themeText = new Label("Theme");
@@ -236,7 +217,7 @@ public class Main extends Application{
 		searchTypeLabel.setId("black-text");
 		ToggleGroup radioButtonGroup = new ToggleGroup();
 		//RadioButton array for search types
-		RadioButton[] searchTypeButtons = {new RadioButton("Song Name"), new RadioButton("Artist Name"), new RadioButton("Album Name"), new RadioButton("Genre")};
+		RadioButton[] searchTypeButtons = {new RadioButton("Song Name"), new RadioButton("Artist Name"), new RadioButton("Genre")};
 		searchTypeButtons[0].setSelected(true);
 		for (RadioButton rb : searchTypeButtons)
 		{
@@ -246,7 +227,7 @@ public class Main extends Application{
 		VBox advancedSearchBox = new VBox(searchTypeLabel, searchTypeBox);
 		advancedSearchBox.getStyleClass().add("pane");
 		
-		//Advanced search stage creation
+		//Advanced search stage stage creation
 		Scene advancedSearchScene = new Scene(advancedSearchBox);
 		Stage advancedSearchStage = new Stage();
 		advancedSearchStage.setTitle("Advanced Search");
@@ -260,7 +241,7 @@ public class Main extends Application{
 		
 		//Event handling
 		 //Settings button event
-		settingsButton.setOnAction(new EventHandler<ActionEvent>()
+		topControlBar.getSettingsButton().setOnAction(new EventHandler<ActionEvent>()
 			{
 				public void handle(ActionEvent e)
 				{
@@ -285,15 +266,38 @@ public class Main extends Application{
 				});
 		
 		 //Search button event
-		searchButton.setOnAction(new EventHandler<ActionEvent>()
+		topControlBar.getSearchButton().setOnAction(new EventHandler<ActionEvent>()
 			{
 				public void handle(ActionEvent e)
 				{
+					SongRecommendationSystem recommendationHandler = new SongRecommendationSystem();
 					
+					switch (searchType)
+					{
+					case "song":
+						updateListVariables(recommendationHandler.recommendBySimilarGenre(topControlBar.getSearchFieldText()));
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, 1);
+						break;
+					case "artist":
+						updateListVariables(recommendationHandler.recommendByArtist(topControlBar.getSearchFieldText()));
+						
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, 1);
+						break;
+					case "genre":
+						updateListVariables(recommendationHandler.recommendByGenre(topControlBar.getSearchFieldText()));
+						updateSongList(currSongList, songGridPane, currSong, songThreshold, 1);
+						break;
+					}
+					
+					gotoPage.clear();
+					gotoPage.setPromptText(String.valueOf(currPage));
+					pageContentLabel.setText("Page " + currPage + " of " + numPages);
+					
+					songGridPane.setMinSize(gridScrollPane.getWidth(), gridScrollPane.getHeight());
 				}
 			});
 		
-		moreDetailsButton.setOnAction(new EventHandler<ActionEvent>()
+		topControlBar.getDetailsButton().setOnAction(new EventHandler<ActionEvent>()
 			{
 				public void handle(ActionEvent event)
 				{
@@ -312,21 +316,16 @@ public class Main extends Application{
 					if (buttonText.equals("Song Name"))
 					{
 						searchType = "song";
-						searchSongField.setText("Search for similar song");
+						topControlBar.setSearchFieldText("Search for song");
 					}else if (buttonText.equals("Artist Name"))
 					{
 						searchType = "artist";
-						searchSongField.setText("Search for similar artist");
-
-					}else if (buttonText.equals("Album Name"))
-					{
-						searchType = "album";
-						searchSongField.setText("Search for similar album");
+						topControlBar.setSearchFieldText("Search for artist");
 
 					}else if (buttonText.equals("Genre"))
 					{
 						searchType = "genre";
-						searchSongField.setText("Search for similar genre");
+						topControlBar.setSearchFieldText("Search for genre");
 					}
 				}
 			});
@@ -336,15 +335,16 @@ public class Main extends Application{
 		mainScene.getStylesheets().add("DarkTheme.css");
 		settingsScene.getStylesheets().add("DarkTheme.css");
 		advancedSearchScene.getStylesheets().add("DarkTheme.css");
-		
+
 		//Add scene and show stage
 		primaryStage.setScene(mainScene);
 		primaryStage.show();
 	}
 	
 	//Function to update the songGridPane, if gotoPage is not -1 it is invoked by the TextField
-	public void updateSongList(GridPane songListGrid, int currSongNum, int songThreshold, int gotoPage)
-	{
+	public void updateSongList(List<Song> songList, GridPane songListGrid, int currSongNum, int songThreshold, int gotoPage)
+	{		
+		//System.out.println(songList);
 		//Clear the grid of previous elements
 		songListGrid.getChildren().clear();
 		
@@ -359,9 +359,9 @@ public class Main extends Application{
 			currSongNum = (gotoPage - 1) * 25;
 		}
 				
-		for (int i = currSongNum; i < currSongNum + songThreshold && i < Song.songList.size(); i++)
+		for (int i = currSongNum; i < currSongNum + songThreshold && i < songList.size(); i++)
 		{
-			Song currentSong = Song.songList.get(i);
+			Song currentSong = songList.get(i);
 			
 			String[] songInfo = {currentSong.getTrackName(), currentSong.getArtistName(), currentSong.getAlbumName(), currentSong.getGenre()};
 			
@@ -371,5 +371,14 @@ public class Main extends Application{
 				songListGrid.add(new Label(songInfo[j]), j, (i % 25) + 1);
 			}
 		}
+	}
+	
+	public void updateListVariables(List<Song> newSongList)
+	{
+		currSong = 0;
+		songThreshold = 25;
+		currPage = 1;
+		currSongList = newSongList;
+		numPages = (newSongList.size() % 25) == 0 ? newSongList.size() / 25 : newSongList.size() / 25 + 1;
 	}
 }
