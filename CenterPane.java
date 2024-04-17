@@ -1,3 +1,5 @@
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -29,8 +31,6 @@ public class CenterPane extends BorderPane{
 		
 		this.songGridPane = new GridPane();
 		this.gridScrollPane = new ScrollPane(songGridPane);
-		
-		songGridPane.setMinWidth(gridScrollPane.getWidth());
 
 		songGridPane.setHgap(40);
 		songGridPane.setVgap(10);

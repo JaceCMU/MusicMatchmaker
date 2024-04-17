@@ -21,5 +21,8 @@ public class LeftPane extends Pane{
 		this.getChildren().add(buttonPane);
 	}
 	
-	
+	public Button getMapButton()
+	{
+		return musicMap;
+	}
 }
