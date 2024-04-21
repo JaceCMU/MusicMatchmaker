@@ -90,6 +90,7 @@ public class MediaPlayerUI {
     // this is the Method to open a music file
     private void openFile() {
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File("MusicFiles"));
         fileChooser.setTitle("Open MP3 File");
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MP3 Files", "*.mp3")
@@ -99,6 +100,7 @@ public class MediaPlayerUI {
             try {
                 musicPlayer.loadMedia(selectedFile.toURI().toURL().toString());
                 mediaPlayer = musicPlayer.getMediaPlayer();
+                updateTitleArtist(selectedFile.getName());
                 mediaPlayer.play();
                 isPlaying = true;
                 bindMediaPlayerToUI();
@@ -126,10 +128,8 @@ public class MediaPlayerUI {
     }
 
     // this updates song title and artist
-    void updateTitleArtist(String title, String author) {
-        String artistName = author;
+    void updateTitleArtist(String title) {
         songTitle.setText(title);
-        artist.setText(artistName);
     }
 
     // this toggles play/pause

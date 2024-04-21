@@ -452,7 +452,7 @@ public class Main extends Application {
 	public void updateSongList(List<Song> songList, GridPane songListGrid, int currSongNum, int songThreshold, int gotoPage, Scene mediaScene) {
 		// Clear the grid of previous elements
 		songListGrid.getChildren().clear();
-
+		
 		// Populate the grid
 		songListGrid.add(new Label("Song name"), 2, 0);
 		songListGrid.add(new Label("Artist"), 3, 0);
@@ -472,9 +472,31 @@ public class Main extends Application {
 			// Add each piece of information to a column
 			for (int j = 0; j < 4; j++) {
 				if (j < 1) {
-					ImageView detailsButton = new ImageView(new Image("Images\\3DotsButton.png", 20, 20, false, false));
+					Button detailsButton = new Button("", new ImageView(new Image("Images\\plusButton.png", 20, 20, false, false)));
 					songListGrid.add(new Button("", detailsButton), j,
 							(i % 25) + 1);
+					detailsButton.setOnAction(new EventHandler<ActionEvent>()
+							{
+								public void handle(ActionEvent event)
+								{
+									for (Song s : Song.songList)
+									{
+										if (s.getTrackName().equals(songInfo[0]))
+										{
+											for (Playlist p : Playlist.playlists)
+											{
+												if (p.getName().equals(rightPlaylistPane.getPlaylistName()))
+												{
+													p.addSong(s);
+													rightPlaylistPane.populateList(p.getName());
+													break;
+												}
+											}
+											break;
+										}
+									}
+								}
+							});
 				} else if (j < 2) {
 					Button playButton = new Button("", new ImageView(new Image("Images\\playButton.png", 20, 20, false, false)));
 					songListGrid.add(new Button("", playButton), j,

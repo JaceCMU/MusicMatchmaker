@@ -114,10 +114,10 @@ public class RightPane extends BorderPane {
 				}
 			});
 
-			playlistList.add(new Label("Song name"), 2, 0);
-			playlistList.add(new Label("Artist"), 3, 0);
-			playlistList.add(new Label("Album"), 4, 0);
-			playlistList.add(new Label("Genre"), 5, 0);
+			playlistList.add(new Label("Song name"), 0, 0);
+			playlistList.add(new Label("Artist"), 1, 0);
+			playlistList.add(new Label("Album"), 2, 0);
+			playlistList.add(new Label("Genre"), 3, 0);
 
 			int indexOfPlaylist = -1;
 
@@ -139,16 +139,7 @@ public class RightPane extends BorderPane {
 
 				// Add each piece of information to a column
 				for (int j = 0; j < 4; j++) {
-					if (j < 1) {
-						ImageView detailsButton = new ImageView(
-								new Image("Images\\3DotsButton.png", 20, 20, false, false));
-						playlistList.add(new Button("", detailsButton), j, i + 1);
-					} else if (j < 2) {
-						ImageView playButton = new ImageView(new Image("Images\\playButton.png", 20, 20, false, false));
-						playlistList.add(new Button("", playButton), j, i + 1);
-					}
-
-					playlistList.add(new Label(songInfo[j]), j + 2, i + 1);
+					playlistList.add(new Label(songInfo[j]), j, i + 1);
 				}
 			}
 		}
@@ -169,4 +160,10 @@ public class RightPane extends BorderPane {
 	public ScrollPane getPlaylistPane() {
 		return scrollPane;
 	}
+	
+	public String getPlaylistName()
+	{
+		return showingPlaylistName;
+	}
+	
 }
